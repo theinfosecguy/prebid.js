@@ -1,4 +1,4 @@
-import {deepClone, logError, getParameterByName} from '../src/utils.js';
+import {deepClone, logError, getParameterByName, logMessage} from '../src/utils.js';
 import {ajax} from '../src/ajax.js';
 import {getStorageManager} from '../src/storageManager.js';
 import adapter from '../libraries/analyticsAdapter/AnalyticsAdapter.js';
@@ -26,8 +26,7 @@ const {
   AD_RENDER_SUCCEEDED
 } = EVENTS;
 function log (msg) {
-  // eslint-disable-next-line no-console
-  console.log(`%cNoBid Analytics ${VERSION}`, 'padding: 2px 8px 2px 8px; background-color:#f50057; color: white', msg);
+  logMessage(`%cNoBid Analytics ${VERSION}: ${msg}`);
 }
 function isJson (str) {
   return str && str.startsWith('{') && str.endsWith('}');
@@ -43,7 +42,7 @@ function sendEvent (event, eventType) {
     var env = (typeof getParameterByName === 'function') && (getParameterByName('nobid-env'));
     env = window.location.href.indexOf('nobid-env=dev') > 0 ? 'dev' : env;
     if (!env) ret = 'https://carbon-nv.servenobids.com';
-    else if (env == 'dev') ret = 'https://localhost:8383';
+    else if (env === 'dev') ret = 'https://localhost:8383';
     return ret;
   }
   if (!nobidAnalytics.initOptions || !nobidAnalytics.initOptions.siteId || !event) return;
@@ -241,7 +240,7 @@ window.nobidCarbonizer = {
       adunit.bids = allowedBidders;
     }
     for (const adunit of adunits) {
-      if (!nobidAnalytics.originalAdUnits[adunit.code]) nobidAnalytics.originalAdUnits[adunit.code] = JSON.parse(JSON.stringify(adunit));
+      if (!nobidAnalytics.originalAdUnits[adunit.code]) nobidAnalytics.originalAdUnits[adunit.code] = deepClone(adunit);
     };
     if (this.isActive()) {
       // 5% of the time do not block;

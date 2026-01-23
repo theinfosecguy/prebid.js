@@ -32,7 +32,26 @@ function isBidResponseValid(bid) {
 
 export const spec = {
   code: BIDDER_CODE,
-  aliases: ['pll', 'iionads', 'apester'],
+  aliases: [
+    { code: 'pll' },
+    { code: 'iionads', gvlid: 1358 },
+    { code: 'apester' },
+    { code: 'adsyield' },
+    { code: 'tgm' },
+    { code: 'adtg_org' },
+    { code: 'velonium' },
+    { code: 'orangeclickmedia', gvlid: 1148 },
+    { code: 'streamvision' },
+    { code: 'stellorMediaRtb' },
+    { code: 'smootai' },
+    { code: 'anzuExchange' },
+    { code: 'adnimation' },
+    { code: 'rtbdemand' },
+    { code: 'altstar' },
+    { code: 'vaayaMedia' },
+    { code: 'performist' },
+    { code: 'oveeo' }
+  ],
   supportedMediaTypes: [BANNER, VIDEO],
 
   /**
@@ -67,7 +86,7 @@ export const spec = {
 
   /**
    * Register bidder specific code, which will execute if a bid from this bidder won the auction
-   * @param {Bid} The bid that won the auction
+   * @param {Object} bid The bid that won the auction
    */
   onBidWon: (bid) => {
     const cpm = bid.pbMg;
@@ -104,8 +123,8 @@ export const spec = {
     const imageSyncs = [];
     for (let i = 0; i < serverResponses.length; i++) {
       const serverResponseHeaders = serverResponses[i].headers;
-      const imgSync = (serverResponseHeaders != null && syncOptions.pixelEnabled) ? serverResponseHeaders.get('X-PLL-UserSync-Image') : null
-      const iframeSync = (serverResponseHeaders != null && syncOptions.iframeEnabled) ? serverResponseHeaders.get('X-PLL-UserSync-Iframe') : null
+      const imgSync = (serverResponseHeaders != null && syncOptions.pixelEnabled) ? serverResponseHeaders.get('x-pll-usersync-image') : null
+      const iframeSync = (serverResponseHeaders != null && syncOptions.iframeEnabled) ? serverResponseHeaders.get('x-pll-usersync-iframe') : null
       if (iframeSync != null) {
         iframeSyncs.push(iframeSync)
       } else if (imgSync != null) {
@@ -128,6 +147,8 @@ function buildRequest(winTop, host, adUnits, bidderRequest) {
       deviceWidth: winTop.screen.width,
       deviceHeight: winTop.screen.height,
       adUnits: adUnits,
+      ortb2: bidderRequest?.ortb2,
+      refererInfo: bidderRequest?.refererInfo,
       sua: bidderRequest?.ortb2?.device?.sua,
       page: bidderRequest?.ortb2?.site?.page || bidderRequest?.refererInfo?.page
     }
@@ -158,15 +179,27 @@ function buildPlacement(bidRequest) {
       bidId: bidRequest.bidId,
       transactionId: bidRequest.ortb2Imp?.ext?.tid,
       sizes: sizes.map(size => {
+        let floorInfo = null;
+        if (typeof bidRequest.getFloor === 'function') {
+          try {
+            floorInfo = bidRequest.getFloor({
+              currency: 'USD',
+              mediaType: bidRequest.params.adUnitType,
+              size: [size[0], size[1]]
+            });
+          } catch (e) {}
+        }
         return {
           width: size[0],
-          height: size[1]
-        }
+          height: size[1],
+          floorInfo: floorInfo
+        };
       }),
       type: bidRequest.params.adUnitType.toUpperCase(),
+      ortb2Imp: bidRequest.ortb2Imp,
       publisherId: bidRequest.params.publisherId,
       userIdAsEids: bidRequest.userIdAsEids,
-      supplyChain: bidRequest.schain,
+      supplyChain: bidRequest?.ortb2?.source?.ext?.schain,
       custom1: bidRequest.params.custom1,
       custom2: bidRequest.params.custom2,
       custom3: bidRequest.params.custom3,

@@ -2,7 +2,7 @@ import * as utils from '../src/utils.js';
 import { BANNER, NATIVE, VIDEO } from '../src/mediaTypes.js';
 import { registerBidder } from '../src/adapters/bidderFactory.js';
 
-const BIDDER = 'exadsadserver';
+const BIDDER = 'exads';
 
 const PARTNERS = {
   ORTB_2_4: 'ortb_2_4'
@@ -27,7 +27,7 @@ function handleReqORTB2Dot4(validBidRequest, endpointUrl, bidderRequest) {
   const envParams = getEnvParams();
 
   // Make a dynamic bid request to the ad partner's endpoint
-  let bidRequestData = {
+  const bidRequestData = {
     'id': validBidRequest.bidId, // NOT bid.bidderRequestId or bid.auctionId
     'at': 1,
     'imp': [],
@@ -177,7 +177,7 @@ function handleResORTB2Dot4(serverResponse, request, adPartner) {
   utils.logInfo('on handleResORTB2Dot4 -> request json data:', JSON.parse(request.data));
   utils.logInfo('on handleResORTB2Dot4 -> serverResponse:', serverResponse);
 
-  let bidResponses = [];
+  const bidResponses = [];
   const bidRq = JSON.parse(request.data);
 
   if (serverResponse.hasOwnProperty('body') && serverResponse.body.hasOwnProperty('id')) {
@@ -233,7 +233,7 @@ function handleResORTB2Dot4(serverResponse, request, adPartner) {
               native.impressionTrackers = [];
 
               responseADM.native.eventtrackers.forEach(tracker => {
-                if (tracker.method == 1) {
+                if (Number(tracker.method) === 1) {
                   native.impressionTrackers.push(tracker.url);
                 }
               });
@@ -266,11 +266,11 @@ function handleResORTB2Dot4(serverResponse, request, adPartner) {
           nurl: bidData.nurl.replace(/^http:\/\//i, 'https://')
         };
 
-        if (mediaType == 'native') {
+        if (mediaType === 'native') {
           bidResponse.native = native;
         }
 
-        if (mediaType == 'video') {
+        if (mediaType === 'video') {
           bidResponse.vastXml = bidData.adm;
           bidResponse.width = bidData.w;
           bidResponse.height = bidData.h;
@@ -302,7 +302,7 @@ function makeBidRequest(url, data) {
 }
 
 function getUrl(adPartner, bid) {
-  let endpointUrlMapping = {
+  const endpointUrlMapping = {
     [PARTNERS.ORTB_2_4]: bid.params.endpoint + '?idzone=' + bid.params.zoneId + '&fid=' + bid.params.fid
   };
 
@@ -319,31 +319,31 @@ function getEnvParams() {
     language: ''
   };
 
+  // TODO: all of this is already in first party data
   envParams.domain = window.location.hostname;
   envParams.page = window.location.protocol + '//' + window.location.host + window.location.pathname;
   envParams.lang = navigator.language.indexOf('-') > -1
     ? navigator.language.split('-')[0]
     : navigator.language;
   envParams.userAgent = navigator.userAgent;
-
   if (envParams.userAgent.match(/Windows/i)) {
     envParams.osName = 'Windows';
   } else if (envParams.userAgent.match(/Mac OS|Macintosh/i)) {
     envParams.osName = 'MacOS';
   } else if (envParams.userAgent.match(/Unix/i)) {
     envParams.osName = 'Unix';
-  } else if (envParams.userAgent.userAgent.match(/Android/i)) {
+  } else if (envParams.userAgent.match(/Android/i)) {
     envParams.osName = 'Android';
-  } else if (envParams.userAgent.userAgent.match(/iPhone|iPad|iPod/i)) {
+  } else if (envParams.userAgent.match(/iPhone|iPad|iPod/i)) {
     envParams.osName = 'iOS';
-  } else if (envParams.userAgent.userAgent.match(/Linux/i)) {
+  } else if (envParams.userAgent.match(/Linux/i)) {
     envParams.osName = 'Linux';
   } else {
     envParams.osName = 'Unknown';
   }
 
-  let browserLanguage = navigator.language || navigator.userLanguage;
-  let acceptLanguage = browserLanguage.replace('_', '-');
+  const browserLanguage = navigator.language || navigator.userLanguage;
+  const acceptLanguage = browserLanguage.replace('_', '-');
 
   envParams.language = acceptLanguage;
 
@@ -447,7 +447,7 @@ export const spec = {
       return false;
     }
 
-    let adPartner = bid.params.partner;
+    const adPartner = bid.params.partner;
 
     if (adPartnerHandlers[adPartner] && adPartnerHandlers[adPartner]['validation']) {
       return adPartnerHandlers[adPartner]['validation'](bid);
@@ -461,11 +461,11 @@ export const spec = {
     utils.logInfo('on buildRequests -> bidderRequest:', bidderRequest);
 
     return validBidRequests.map(bid => {
-      let adPartner = bid.params.partner;
+      const adPartner = bid.params.partner;
 
       imps.set(bid.params.impressionId, { adPartner: adPartner, mediaType: null });
 
-      let endpointUrl = getUrl(adPartner, bid);
+      const endpointUrl = getUrl(adPartner, bid);
 
       // Call the handler for the ad partner, passing relevant parameters
       if (adPartnerHandlers[adPartner]['request']) {

@@ -30,7 +30,7 @@ Use `setConfig` to instruct Prebid.js to initilize the exadsBidAdapter, as speci
 ```js
 pbjs.setConfig({
     debug: false,
-    //cache: { url: "https://prebid.adnxs.com/pbc/v1/cache" },
+    //cache: { url: "https://prebid.example.com/pbc/v1/cache" },
     consentManagement: {
         gdpr: {
             cmpApi: 'static',
@@ -123,7 +123,7 @@ adUnits =
             }
         },
         bids: [{
-            bidder: 'exadsadserver',
+            bidder: 'exads',
             params: {
                     zoneId: 12345,
                     fid: '829a896f011475d50da0d82cfdd1af8d9cdb07ff',
@@ -162,7 +162,7 @@ adUnits =
             }
         },
         bids: [{
-            bidder: 'exadsadserver',
+            bidder: 'exads',
             params: {
                     zoneId: 12345,
                     fid: '829a896f011475d50da0d82cfdd1af8d9cdb07ff',
@@ -237,7 +237,7 @@ adUnits = [{
         }
     },
     bids: [{
-        bidder: 'exadsadserver',
+        bidder: 'exads',
         params: {
             zoneId: 12345,
             fid: '829a896f011475d50da0d82cfdd1af8d9cdb07ff',
@@ -365,7 +365,7 @@ adUnits = [{
         }
     },
     bids: [{
-        bidder: 'exadsadserver',
+        bidder: 'exads',
         params: {
                 zoneId: 12345,
                 fid: '829a896f011475d50da0d82cfdd1af8d9cdb07ff',
