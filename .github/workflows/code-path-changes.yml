@@ -31,8 +31,15 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
+        if: ${{ env.OAUTH2_CLIENT_ID != '' && env.OAUTH2_CLIENT_SECRET != '' && env.OAUTH2_REFRESH_TOKEN != '' }}
         run: npm install axios nodemailer
 
+      - name: Skip notification when mail secrets are missing
+        if: ${{ env.OAUTH2_CLIENT_ID == '' || env.OAUTH2_CLIENT_SECRET == '' || env.OAUTH2_REFRESH_TOKEN == '' }}
+        run: |
+          echo "Mail OAuth secrets are not configured. Skipping notification run."
+
       - name: Run Notification Script
+        if: ${{ env.OAUTH2_CLIENT_ID != '' && env.OAUTH2_CLIENT_SECRET != '' && env.OAUTH2_REFRESH_TOKEN != '' }}
         run: |
           node .github/workflows/scripts/send-notification-on-change.js

@@ -46,9 +46,14 @@ async function getAccessToken(clientId, clientSecret, refreshToken) {
   const refreshToken = process.env.OAUTH2_REFRESH_TOKEN;
 
   // validate params
-  if (!repo || !prNumber || !token || !clientId || !clientSecret || !refreshToken) {
+  if (!repo || !prNumber || !token) {
     console.error('Missing required environment variables.');
     process.exit(1);
+  }
+
+  if (!clientId || !clientSecret || !refreshToken) {
+    console.log('Mail OAuth secrets are not configured. Skipping notifications.');
+    process.exit(0);
   }
 
   // the whole process is in a big try/catch. e.g. if the config file doesn't exist, github is down, etc.
