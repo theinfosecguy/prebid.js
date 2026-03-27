@@ -9,11 +9,11 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
   issues: write
 
 jobs:
   comment:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,15 +26,51 @@ jobs:
         with:
           name: comment
 
-      - name: 'Comment on PR'
+      - name: Validate comment payload
+        id: validate-comment
         if: ${{ steps.get-comment.outputs.exists == 'true' }}
         uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
-            const temp = '${{ runner.temp }}/artifacts';
-            const {issue_number, body} = JSON.parse(fs.readFileSync(path.join(temp, 'comment.json'))); 
+            const payloadPath = path.join('${{ runner.temp }}', 'artifacts', 'comment.json');
+            if (!fs.existsSync(payloadPath)) {
+              throw new Error('comment.json artifact is missing');
+            }
+            let parsed;
+            try {
+              parsed = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
+            } catch (error) {
+              throw new Error(`Invalid comment.json payload: ${error.message}`);
+            }
+            const issueNumber = Number(parsed.issue_number);
+            if (!Number.isInteger(issueNumber) || issueNumber <= 0) {
+              throw new Error('comment.json must contain a positive integer issue_number');
+            }
+            if (typeof parsed.body !== 'string') {
+              throw new Error('comment.json must contain a string body');
+            }
+            const body = parsed.body.trim();
+            if (!body) {
+              throw new Error('comment.json body cannot be empty');
+            }
+            if (body.length > 65000) {
+              throw new Error('comment.json body exceeds maximum length');
+            }
+            core.setOutput('issue-number', String(issueNumber));
+            core.setOutput('body', body);
+
+      - name: 'Comment on PR'
+        if: ${{ steps.validate-comment.outcome == 'success' }}
+        uses: actions/github-script@v8
+        env:
+          ISSUE_NUMBER: ${{ steps.validate-comment.outputs.issue-number }}
+          COMMENT_BODY: ${{ steps.validate-comment.outputs.body }}
+        with:
+          script: |
+            const issue_number = Number(process.env.ISSUE_NUMBER);
+            const body = process.env.COMMENT_BODY;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
