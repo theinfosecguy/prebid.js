@@ -6,6 +6,7 @@ permissions:
   contents: read
 jobs:
   generate_deps:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     name: Generate dependencies.json
     runs-on: ubuntu-latest
 
