@@ -10,6 +10,15 @@ const path = require('path');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 async function getAccessToken(clientId, clientSecret, refreshToken) {
   try {
     const response = await axios.post('https://oauth2.googleapis.com/token', {
@@ -109,12 +118,14 @@ async function getAccessToken(clientId, clientSecret, refreshToken) {
 
     // Send one email per recipient
     for (const [email, files] of Object.entries(matchesByEmail)) {
+      const safeFiles = files.map(file => `<li>${escapeHtml(file)}</li>`).join('');
+      const prUrl = `https://github.com/${owner}/${repoName}/pull/${encodeURIComponent(prNumber)}`;
       const emailBody = `
-        ${email},
+        ${escapeHtml(email)},
         <p>
-        Files relevant to your integration have been changed in open source ${repo}. The <a href="https://github.com/${repo}/pull/${prNumber}">pull request is #${prNumber}</a>. These are the files you monitor that have been modified:
+        Files relevant to your integration have been changed in open source ${escapeHtml(repo)}. The <a href="${prUrl}">pull request is #${escapeHtml(prNumber)}</a>. These are the files you monitor that have been modified:
         <ul>
-          ${files.map(file => `<li>${file}</li>`).join('')}
+          ${safeFiles}
         </ul>
       `;
 
@@ -127,7 +138,6 @@ async function getAccessToken(clientId, clientSecret, refreshToken) {
         });
 
         console.log(`Email sent successfully to ${email}`);
-        console.log(`${emailBody}`);
       } catch (error) {
         console.error(`Failed to send email to ${email}:`, error.message);
       }
